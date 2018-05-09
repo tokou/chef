@@ -139,7 +139,7 @@ class Chef
         end
 
         # for now we always write the file (ugly but its what it is)
-        write_config
+        generate_config
       end
 
       def action_delete
@@ -154,56 +154,57 @@ class Chef
         end
 
         # for now we always write the file (ugly but its what it is)
-        write_config
+        generate_config
       end
 
-      def write_config
-        return unless platform_family?("rhel", "fedora", "amazon")
+      def generate_config
+        case node[:platform_family]
+        when "rhel", "fedora", "amazon"
+          conf = {}
+          # walk the collection
+          run_context.resource_collection.each do |resource|
+            next unless resource.is_a? Chef::Resource::Route
+            # default to eth0
+            dev = if resource.device
+                    resource.device
+                  else
+                    "eth0"
+                  end
 
-        conf = {}
-        # walk the collection
-        run_context.resource_collection.each do |resource|
-          next unless resource.is_a? Chef::Resource::Route
-          # default to eth0
-          dev = if resource.device
-                  resource.device
-                else
-                  "eth0"
-                end
-
-          conf[dev] = "" if conf[dev].nil?
-          case @action
-          when :add
-            conf[dev] << config_file_contents(:add, comment: resource.comment, device: resource.device, target: resource.target, metric: resource.metric, netmask: resource.netmask, gateway: resource.gateway) if resource.action == [:add]
-          when :delete
-            # need to do this for the case when the last route on an int
-            # is removed
-            conf[dev] << config_file_contents(:delete)
+            conf[dev] = "" if conf[dev].nil?
+            case @action
+            when :add
+              conf[dev] << config_file_contents(:add, comment: resource.comment, device: resource.device, target: resource.target, metric: resource.metric, netmask: resource.netmask, gateway: resource.gateway) if resource.action == [:add]
+            when :delete
+              # need to do this for the case when the last route on an int
+              # is removed
+              conf[dev] << config_file_contents(:delete)
+            end
           end
-        end
-        conf.each_key do |k|
-          if new_resource.target == "default"
-            network_file_name = "/etc/sysconfig/network"
-            converge_by("write route default route to #{network_file_name}") do
-              logger.trace("#{new_resource} writing default route #{new_resource.gateway} to #{network_file_name}")
-              if ::File.exist?(network_file_name)
-                network_file = ::Chef::Util::FileEdit.new(network_file_name)
-                network_file.search_file_replace_line /^GATEWAY=/, "GATEWAY=#{new_resource.gateway}"
-                network_file.insert_line_if_no_match /^GATEWAY=/, "GATEWAY=#{new_resource.gateway}"
-                network_file.write_file
-              else
+          conf.each_key do |k|
+            if new_resource.target == "default"
+              network_file_name = "/etc/sysconfig/network"
+              converge_by("write route default route to #{network_file_name}") do
+                logger.trace("#{new_resource} writing default route #{new_resource.gateway} to #{network_file_name}")
+                if ::File.exist?(network_file_name)
+                  network_file = ::Chef::Util::FileEdit.new(network_file_name)
+                  network_file.search_file_replace_line /^GATEWAY=/, "GATEWAY=#{new_resource.gateway}"
+                  network_file.insert_line_if_no_match /^GATEWAY=/, "GATEWAY=#{new_resource.gateway}"
+                  network_file.write_file
+                else
+                  network_file = ::File.new(network_file_name, "w")
+                  network_file.puts("GATEWAY=#{new_resource.gateway}")
+                  network_file.close
+                end
+              end
+            else
+              network_file_name = "/etc/sysconfig/network-scripts/route-#{k}"
+              converge_by("write route route.#{k}\n#{conf[k]} to #{network_file_name}") do
                 network_file = ::File.new(network_file_name, "w")
-                network_file.puts("GATEWAY=#{new_resource.gateway}")
+                network_file.puts(conf[k])
+                logger.trace("#{new_resource} writing route.#{k}\n#{conf[k]}")
                 network_file.close
               end
-            end
-          else
-            network_file_name = "/etc/sysconfig/network-scripts/route-#{k}"
-            converge_by("write route route.#{k}\n#{conf[k]} to #{network_file_name}") do
-              network_file = ::File.new(network_file_name, "w")
-              network_file.puts(conf[k])
-              logger.trace("#{new_resource} writing route.#{k}\n#{conf[k]}")
-              network_file.close
             end
           end
         end
