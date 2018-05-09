@@ -33,7 +33,7 @@ class Chef
       property :netmask, [String, nil]
       property :gateway, [String, nil]
       property :device, [String, nil], desired_state: false # Has a partial default in the provider of eth0.
-      property :route_type, [:host, :net], default: :host, coerce: proc { |x| x.to_sym }, desired_state: false
+      property :route_type, Symbol, equal_to: [:host, :net], default: :host, desired_state: false
     end
   end
 end
