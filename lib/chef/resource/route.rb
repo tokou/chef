@@ -34,13 +34,6 @@ class Chef
       property :gateway, [String, nil]
       property :device, [String, nil], desired_state: false # Has a partial default in the provider of eth0.
       property :route_type, [:host, :net], default: :host, coerce: proc { |x| x.to_sym }, desired_state: false
-
-      # I can find no evidence of these properties actually being used by Chef. NK 2017-04-11
-      property :networking, [String, nil], desired_state: false
-      property :networking_ipv6, [String, nil], desired_state: false
-      property :hostname, [String, nil], desired_state: false
-      property :domainname, [String, nil], desired_state: false
-      property :domain, [String, nil], desired_state: false
     end
   end
 end
