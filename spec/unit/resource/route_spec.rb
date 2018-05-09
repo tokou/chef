@@ -61,24 +61,6 @@ describe Chef::Resource::Route do
     expect(resource.device).to eql("eth0")
   end
 
-  it "allows you to specify the route type" do
-    resource.route_type "host"
-    expect(resource.route_type).to eql(:host)
-  end
-
-  it "defaults to a host route type" do
-    expect(resource.route_type).to eql(:host)
-  end
-
-  it "accepts a net route type" do
-    resource.route_type :net
-    expect(resource.route_type).to eql(:net)
-  end
-
-  it "rejects any other route_type but :host and :net" do
-    expect { resource.route_type "lolcat" }.to raise_error(ArgumentError)
-  end
-
   describe "when it has netmask, gateway, and device" do
     before do
       resource.target("charmander")

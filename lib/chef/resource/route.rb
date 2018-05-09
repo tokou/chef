@@ -47,11 +47,6 @@ class Chef
       property :device, [String, nil],
                description: "The network interface to which the route applies.",
                desired_state: false # Has a partial default in the provider of eth0.
-
-      property :route_type, Symbol,
-               description: "",
-               equal_to: [:host, :net], default: :host, desired_state: false
-
     end
   end
 end
