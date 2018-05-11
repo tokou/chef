@@ -27,7 +27,9 @@ class Chef
       provides(:cron_access) { true }
       provides(:cron_manage) { true } # legacy name
 
-      property :user, String, name_property: true
+      property :user, String,
+               description: "",
+               name_property: true
 
       action :allow do
         with_run_context :root do

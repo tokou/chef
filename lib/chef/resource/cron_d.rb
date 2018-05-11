@@ -24,36 +24,79 @@ class Chef
       resource_name :cron_d
       provides(:cron_d) { true }
 
-      property :cron_name, name_property: true
-      property :cookbook, String
-      property :predefined_value, String, equal_to: %w{ @reboot @yearly @annually @monthly @weekly @daily @midnight @hourly }
-      property :minute, [Integer, String], default: "*", callbacks: {
+      property :cron_name, String,
+               description: "",
+               name_property: true
+
+      property :cookbook, String,
+               description: ""
+
+      property :predefined_value, String,
+               description: "",
+               equal_to: %w{ @reboot @yearly @annually @monthly @weekly @daily @midnight @hourly }
+
+      property :minute, [Integer, String],
+               description: "",
+               default: "*", callbacks: {
         "should be a valid minute spec" => lambda do |spec|
           validate_numeric(spec, 0, 59)
         end,
       }
-      property :hour, [Integer, String], default: "*", callbacks: {
+
+      property :hour, [Integer, String],
+               description: "",
+               default: "*", callbacks: {
         "should be a valid hour spec" => ->(spec) { validate_numeric(spec, 0, 23) },
       }
-      property :day, [Integer, String], default: "*", callbacks: {
+
+      property :day, [Integer, String],
+               description: "",
+               default: "*", callbacks: {
         "should be a valid day spec" => ->(spec) { validate_numeric(spec, 1, 31) },
       }
-      property :month, [Integer, String], default: "*", callbacks: {
+
+      property :month, [Integer, String],
+               description: "",
+               default: "*", callbacks: {
         "should be a valid month spec" => ->(spec) { validate_month(spec) },
       }
-      property :weekday, [Integer, String], default: "*", callbacks: {
+
+      property :weekday, [Integer, String],
+               description: "",
+               default: "*", callbacks: {
         "should be a valid weekday spec" => ->(spec) { validate_dow(spec) },
       }
 
-      property :command, String, required: true
-      property :user, String, default: "root"
-      property :mailto, [String, NilClass]
-      property :path, [String, NilClass]
-      property :home, [String, NilClass]
-      property :shell, [String, NilClass]
-      property :comment, [String, NilClass]
-      property :environment, Hash, default: {}
-      property :mode, [String, Integer], default: "0600"
+      property :command, String,
+               description: "",
+               required: true
+
+      property :user, String,
+               description: "",
+               default: "root"
+
+      property :mailto, [String, NilClass],
+               description: ""
+
+      property :path, [String, NilClass],
+               description: ""
+
+      property :home, [String, NilClass],
+               description: ""
+
+      property :shell, [String, NilClass],
+               description: ""
+
+      property :comment, [String, NilClass],
+               description: ""
+
+      property :environment, Hash,
+               description: "",
+               default: {}
+
+      property :mode, [String, Integer],
+               description: "",
+               default: "0600"
 
       def after_created
         raise ArgumentError, "The 'cookbook' property for the cron_d resource is no longer supported now that this resource ships in Chef itself." if new_resource.cookbook
