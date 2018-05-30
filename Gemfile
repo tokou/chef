@@ -16,6 +16,8 @@ group(:omnibus_package) do
   # is merged and released
   gem "unf_ext", "=0.0.7.6", :git => "https://github.com/jquick/ruby-unf_ext.git"
 
+  # override for FFI searching in potentially unprivileged locations on Windows for libraries
+  gem "ffi", :git => "https://github.com/chef/ffi.git", branch: "sp/chef-1.9.21-windows-patch"
   gem "appbundler"
   gem "rb-readline"
   gem "inspec", "~> 2"
