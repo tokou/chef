@@ -126,6 +126,12 @@ class Chef
       end
 
       action_class do
+        # a simple helper to determine if we're on a windows release pre-2012 / 8
+        # @return [Float] kernel release
+        def older_than_2012_or_8
+          node["platform_version"].to_f < 6.2
+        end
+
         # shellout to determine the actively installed version of powershell
         # we have this same data in ohai, but it doesn't get updated if powershell is installed mid run
         # @return [Integer] the powershell version or 0 for nothing
