@@ -72,9 +72,9 @@ class Chef
         unless features_to_install.empty?
           converge_by("install Windows feature#{'s' if features_to_install.count > 1} #{features_to_install.join(',')}") do
             install_command = "#{install_feature_cmdlet} #{features_to_install.join(',')}"
-            install_command << " -IncludeAllSubFeature"  if new_resource.all
-            if node["platform_version"].to_f < 6.2 && (new_resource.source || new_resource.management_tools)
-              Chef::Log.warn("The 'source' and 'management_tools' properties are not available on Windows 2012R2 or great. Skipping these properties!")
+            install_command << " -IncludeAllSubFeature" if new_resource.all
+            if older_than_2012_or_8 && (new_resource.source || new_resource.management_tools)
+              Chef::Log.warn("The 'source' and 'management_tools' properties are only available on Windows 8/2012 or greater. Skipping these properties!")
             else
               install_command << " -Source \"#{new_resource.source}\"" if new_resource.source
               install_command << " -IncludeManagementTools" if new_resource.management_tools
