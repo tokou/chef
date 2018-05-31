@@ -78,10 +78,6 @@ class Chef
         :description => "Enable SSH agent forwarding",
         :boolean => true
 
-      option :identity_file,
-        :long => "--identity-file IDENTITY_FILE",
-        :description => "The SSH identity file used for authentication. [DEPRECATED] Use --ssh-identity-file instead."
-
       option :ssh_identity_file,
         :short => "-i IDENTITY_FILE",
         :long => "--ssh-identity-file IDENTITY_FILE",
