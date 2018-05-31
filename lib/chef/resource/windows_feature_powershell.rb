@@ -154,12 +154,16 @@ class Chef
           raise "The windows_feature_powershell resource requires PowerShell 3.0 or later. Please install PowerShell 3.0+ before running this resource." if powershell_version < 3
         end
 
+        # The appropirate cmdlet to install a windows feature based on windows release
+        # @return [String]
         def install_feature_cmdlet
-          node["platform_version"].to_f < 6.2 ? "Import-Module ServerManager; Add-WindowsFeature" : "Install-WindowsFeature"
+          older_than_2012_or_8 ? "Add-WindowsFeature" : "Install-WindowsFeature"
         end
 
+        # The appropirate cmdlet to remove a windows feature based on windows release
+        # @return [String]
         def remove_feature_cmdlet
-          node["platform_version"].to_f < 6.2 ? "Import-Module ServerManager; Remove-WindowsFeature" : "Uninstall-WindowsFeature"
+          older_than_2012_or_8 ? "Remove-WindowsFeature" : "Uninstall-WindowsFeature"
         end
 
         # @return [Array] features the user has requested to install which need installation
@@ -226,8 +230,8 @@ class Chef
         # fetch the list of available feature names and state in JSON and parse the JSON
         def parsed_feature_list
           # Grab raw feature information from dism command line
-          raw_list_of_features = if node["platform_version"].to_f < 6.2
-                                   powershell_out!("Import-Module ServerManager; Get-WindowsFeature | Select-Object -Property Name,InstallState | ConvertTo-Json -Compress", timeout: new_resource.timeout).stdout
+          raw_list_of_features = if older_than_2012_or_8
+                                   powershell_out!("Get-WindowsFeature | Select-Object -Property Name,InstallState | ConvertTo-Json -Compress", timeout: new_resource.timeout).stdout
                                  else
                                    powershell_out!("Get-WindowsFeature | Select-Object -Property Name,InstallState | ConvertTo-Json -Compress", timeout: new_resource.timeout).stdout
                                  end
@@ -245,7 +249,7 @@ class Chef
         # @return [void]
         def fail_if_removed
           return if new_resource.source # if someone provides a source then all is well
-          if node["platform_version"].to_f > 6.2
+          unless older_than_2012_or_8
             return if registry_key_exists?('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Servicing') && registry_value_exists?('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Servicing', name: "LocalSourcePath") # if source is defined in the registry, still fine
           end
           removed = new_resource.feature_name & node["powershell_features_cache"]["removed"]
@@ -254,7 +258,7 @@ class Chef
 
         # Fail unless we're on windows 8+ / 2012+ where deleting a feature is supported
         def raise_if_delete_unsupported
-          raise Chef::Exceptions::UnsupportedAction, "#{self} :delete action not support on Windows releases before Windows 8/2012. Cannot continue!" unless node["platform_version"].to_f >= 6.2
+          raise Chef::Exceptions::UnsupportedAction, "#{self} :delete action not support on Windows releases before Windows 8/2012. Cannot continue!" if older_than_2012_or_8
         end
       end
     end
